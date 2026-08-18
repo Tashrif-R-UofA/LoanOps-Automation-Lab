@@ -1,0 +1,554 @@
+{
+  "name": "Loan Application",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Loan Application",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Applicant name",
+              "fieldName": "applicant_name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "fieldName": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Loan amount",
+              "fieldType": "number",
+              "fieldName": "loan_amount",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Loan purpose",
+              "fieldType": "dropdown",
+              "fieldName": "loan_purpose",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Personal"
+                  },
+                  {
+                    "option": "Automotive"
+                  },
+                  {
+                    "option": "Renewable energy"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Credit score",
+              "fieldType": "number",
+              "fieldName": "credit_score",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Employment status",
+              "fieldType": "dropdown",
+              "fieldName": "employment_status",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Full time"
+                  },
+                  {
+                    "option": "Part time"
+                  },
+                  {
+                    "option": "Casual"
+                  },
+                  {
+                    "option": "Self employed"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cbc43e67-bf33-4ea8-88c4-e4bd9ba1e3db",
+      "name": "Loan Application",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "4f9ef989-6b12-40b3-b7ea-9a52c227bd6c"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "application_id",
+              "name": "application_id",
+              "value": "={{ $now.toMillis() }}",
+              "type": "number"
+            },
+            {
+              "id": "submitted_at",
+              "name": "submitted_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b0c0c95f-055d-4840-ba64-7802a6b0054d",
+      "name": "Normalise",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.credit_score }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "lt"
+                    },
+                    "rightValue": 550
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "decline"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.loan_amount }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "gt"
+                    },
+                    "rightValue": 50000
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "manual_underwriting"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "auto_assess"
+        }
+      },
+      "id": "5b155ec4-7ae0-424b-8986-9ba2f5153e42",
+      "name": "Triage",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "route",
+              "name": "route",
+              "value": "Declined — automated",
+              "type": "string"
+            },
+            {
+              "id": "sla_hours",
+              "name": "sla_hours",
+              "value": 4,
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "8e68a34d-812f-4b7b-bb6e-64dfcac6b289",
+      "name": "Decline",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1MSjLAk8pPAb80c0fYdNXoBUVxHFENGzx_qFWVOCMn1Q",
+          "mode": "list",
+          "cachedResultName": "loan_applications",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MSjLAk8pPAb80c0fYdNXoBUVxHFENGzx_qFWVOCMn1Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MSjLAk8pPAb80c0fYdNXoBUVxHFENGzx_qFWVOCMn1Q/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "submitted_at": "={{ $('Normalise').item.json.submittedAt }}",
+            "applicant_name": "={{ $('Loan Application').item.json.applicant_name }}",
+            "application_id": "={{ $('Normalise').item.json.application_id }}",
+            "email": "={{ $('Normalise').item.json.email }}",
+            "amount": "={{ $('Normalise').item.json.loan_amount }}",
+            "credit_score": "={{ $('Normalise').item.json.credit_score }}",
+            "sla_hours": "={{ $('Normalise').item.json.submittedAt }}",
+            "route": "={{ $('Normalise').item.json.formMode }}",
+            "submittedAt": "={{ $('Normalise').item.json.submitted_at }}",
+            "formMode": "={{ $('Normalise').item.json.formMode }}",
+            "loan_purpose": "={{ $('Loan Application').item.json.loan_purpose }}",
+            "employment_status": "={{ $('Loan Application').item.json.employment_status }}",
+            "loan_amount": "={{ $('Normalise').item.json.loan_amount }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "application_id",
+              "displayName": "application_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "submitted_at",
+              "displayName": "submitted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "applicant_name",
+              "displayName": "applicant_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "credit_score",
+              "displayName": "credit_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "route",
+              "displayName": "route",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sla_hours",
+              "displayName": "sla_hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "submittedAt",
+              "displayName": "submittedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "formMode",
+              "displayName": "formMode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "loan_purpose",
+              "displayName": "loan_purpose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "employment_status",
+              "displayName": "employment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "loan_amount",
+              "displayName": "loan_amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c2e1e8e1-c57c-4c4b-8e79-9f413bdad338",
+      "name": "Append Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3HmQtPJDlcV7oiLU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "route",
+              "name": "route",
+              "value": "Manual underwriting queue",
+              "type": "string"
+            },
+            {
+              "id": "sla_hours",
+              "name": "sla_hours",
+              "value": 24,
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "09f0a192-e461-4cc3-83b2-4112adc7f2c5",
+      "name": "Manual Underwriting",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "route",
+              "name": "route",
+              "value": "Automated assessment",
+              "type": "string"
+            },
+            {
+              "id": "sla_hours",
+              "name": "sla_hours",
+              "value": 48,
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "3a3ab516-d4ee-4556-8bc3-159b55187e8a",
+      "name": "Auto Assess",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        192
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Loan Application": {
+      "main": [
+        [
+          {
+            "node": "Normalise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalise": {
+      "main": [
+        [
+          {
+            "node": "Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triage": {
+      "main": [
+        [
+          {
+            "node": "Decline",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Manual Underwriting",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Auto Assess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decline": {
+      "main": [
+        [
+          {
+            "node": "Append Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Underwriting": {
+      "main": [
+        [
+          {
+            "node": "Append Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto Assess": {
+      "main": [
+        [
+          {
+            "node": "Append Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b83f1360-7c67-43dc-8f78-09c409041cd2",
+  "meta": {
+    "instanceId": "8941b57a489f4736827958a931412f8c2334439f33ab9c564a1882d7792842d0"
+  },
+  "nodeGroups": [],
+  "id": "3hUWEX60VcR8XKLJ",
+  "tags": []
+}

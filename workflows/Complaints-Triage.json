@@ -1,0 +1,376 @@
+{
+  "name": "Complaints-Triage",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Customer Complaint",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Customer Name"
+            },
+            {
+              "fieldLabel": "Complaint Details"
+            },
+            {
+              "fieldLabel": "Product",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Personal"
+                  },
+                  {
+                    "option": "Automotive"
+                  },
+                  {
+                    "option": "Renewable Energy"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Channel",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Phone"
+                  },
+                  {
+                    "option": "Email"
+                  },
+                  {
+                    "option": "Web"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4107a7e1-bf26-4de9-abf5-2ee3eea5b59f",
+      "name": "On form submission",
+      "webhookId": "dc29078c-3adb-4e91-a405-a7d94660a5bb"
+    },
+    {
+      "parameters": {
+        "jsCode": "const highRiskTerms = ['hardship','financial difficulty','afca','ombudsman',\n                       'legal','discrimination','unauthorised','fraud'];\n\nreturn $input.all().map(item => {\n  const key = Object.keys(item.json)\n    .find(k => k.toLowerCase().replace(/[^a-z]/g, '').includes('complaint'));\n\n  if (!key) {\n    throw new Error('Validation failed — no complaint text field found. Keys received: '\n                    + Object.keys(item.json).join(', '));\n  }\n\n  const text = String(item.json[key] ?? '').toLowerCase();\n  const matched = highRiskTerms.filter(t => text.includes(t));\n\n  return { json: {\n    ...item.json,\n    severity: matched.length ? 'High' : 'Standard',\n    matched_terms: matched.join(', ') || 'none',\n    triaged_at: new Date().toISOString()\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e1f2803a-1b53-4bf7-8cdc-e79f42aa2e41",
+      "name": "Severity Scoring"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "33ac1e03-68d6-49ae-a89b-d56c4d1ae0d4",
+              "leftValue": "={{ $json.severity }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "e5711b2a-7efa-42cf-9b4f-a78170728cc5",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "207c98f8-31d3-4eab-8421-b45f8b00c600",
+              "name": "sla_due",
+              "value": "={{ $now.plus(4, 'hours').toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "0b8d074c-74db-4b48-acd5-0765d624ee67",
+              "name": "priority",
+              "value": "P1 — 4 hour response",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        -80
+      ],
+      "id": "9ca905eb-f37b-4dca-a38a-fe9530a6862c",
+      "name": "High Severity SLA"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0cec29e2-81b0-4865-a625-5cb0234ce63f",
+              "name": "=sla_due",
+              "value": "={{ $now.plus(48, 'hours').toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "35d45d22-db52-43cf-8853-e7bfab573c0c",
+              "name": "priority",
+              "value": " P3 — 48 hour response",
+              "type": "string"
+            },
+            {
+              "id": "107a5792-990b-4865-9fda-88349adfc3ab",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        96
+      ],
+      "id": "e8d1f875-056c-4f31-b343-74d9ef79cc33",
+      "name": "Standard SLA"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1MSjLAk8pPAb80c0fYdNXoBUVxHFENGzx_qFWVOCMn1Q",
+          "mode": "list",
+          "cachedResultName": "loan_applications",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MSjLAk8pPAb80c0fYdNXoBUVxHFENGzx_qFWVOCMn1Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1097053959,
+          "mode": "list",
+          "cachedResultName": "complaints",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MSjLAk8pPAb80c0fYdNXoBUVxHFENGzx_qFWVOCMn1Q/edit#gid=1097053959"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "triaged_at": "={{ $json.triaged_at }}",
+            "customer": "={{ $json['Customer name'] }}",
+            "product": "={{ $json.Product }}",
+            "channel": "={{ $json.Channel }}",
+            "severity": "={{ $json.severity }}",
+            "matched_terms": "={{ $json.matched_terms }}",
+            "sla_due": "={{ $json.sla_due }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "triaged_at",
+              "displayName": "triaged_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "customer",
+              "displayName": "customer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "product",
+              "displayName": "product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "channel",
+              "displayName": "channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "severity",
+              "displayName": "severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "matched_terms",
+              "displayName": "matched_terms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sla_due",
+              "displayName": "sla_due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        -16
+      ],
+      "id": "ee2d06dc-c889-4e1c-a0f7-e13b765d5a15",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3HmQtPJDlcV7oiLU",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Severity Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Severity Scoring": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "High Severity SLA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Standard SLA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Severity SLA": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Standard SLA": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5d1633d4-de7c-4b64-98f5-67a73545672e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8941b57a489f4736827958a931412f8c2334439f33ab9c564a1882d7792842d0"
+  },
+  "nodeGroups": [],
+  "id": "yjwYDwVW55n1Rvb8",
+  "tags": []
+}
