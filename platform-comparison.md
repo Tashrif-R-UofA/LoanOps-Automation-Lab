@@ -101,8 +101,8 @@ The workflows in this repository use n8n for those reasons.
 
 ## Limits of this evaluation
 
-This is based on free-tier use over a single evening. It does not assess reliability at volume,
-support responsiveness, enterprise administration features, or total cost of ownership at scale —
+This is based on free-tier use. It does not assess reliability at volume,
+support responsiveness, enterprise administration features, or total cost of ownership at scale,
 all of which would matter in an actual platform selection. It is enough to explain a choice between
 two tools for a personal lab, and not enough to justify an organisational commitment.
 

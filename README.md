@@ -1,4 +1,4 @@
-# Operations Automation Lab
+# Loan Operations Automation Lab
 
 Low-code workflow automations modelling lending operations processes, built in n8n.
 
